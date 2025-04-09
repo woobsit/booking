@@ -37,16 +37,10 @@ return new class extends Migration
             $table->date('insurance_expiry');
             $table->date('next_service_date');
 
-            // Pricing
-            $table->decimal('base_fare', 10, 2);
-            $table->decimal('per_km_rate', 10, 2);
-            $table->decimal('per_minute_rate', 10, 2)->nullable();
-
             // Amenities/Features
             $table->boolean('has_ac')->default(true);
             $table->boolean('has_wifi')->default(false);
-            $table->boolean('is_wheelchair_accessible')->default(false);
-
+            
             $table->timestamps();
             $table->softDeletes();
         });

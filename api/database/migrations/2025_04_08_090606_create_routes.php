@@ -31,14 +31,10 @@ return new class extends Migration
 
             // Pricing
             $table->decimal('base_price', 10, 2);
-            $table->decimal('price_per_km', 10, 2);
-            $table->decimal('peak_time_surcharge', 5, 2)->default(0);
-            $table->decimal('weekend_surcharge', 5, 2)->default(0);
 
             // Operational details
             $table->time('first_departure_time');
             $table->time('last_departure_time');
-            $table->integer('frequency_minutes')->nullable()->comment('For regular routes');
 
             // Status
             $table->boolean('is_active')->default(true);

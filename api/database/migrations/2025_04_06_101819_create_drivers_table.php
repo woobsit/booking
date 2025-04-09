@@ -22,11 +22,11 @@ return new class extends Migration
             $table->date('date_of_birth');
             $table->string('national_id_number');
             $table->string('phone')->unique();
-            $table->string('email')->unique()->nullable();
+            $table->string('email')->unique();
             $table->string('address');
             $table->string('city');
-            $table->string('country');
-            $table->string('postal_code');
+            $table->string('country')->default('Nigeria');
+            $table->string('postal_code')->nullable();
             $table->string('emergency_contact_name');
             $table->string('emergency_contact_phone');
 
@@ -42,7 +42,7 @@ return new class extends Migration
             $table->enum('status', ['available', 'on_trip', 'on_leave', 'terminated'])->default('available');
             $table->date('hire_date');
             $table->decimal('monthly_salary', 12, 2)->nullable();
-            $table->string('employment_type')->default('contractor'); // contractor, full-time, part-time
+            $table->string('employment_type')->default('full-time'); // contractor, full-time, part-time
 
             // Vehicle Assignment
             $table->foreignId('current_vehicle_id')->nullable()->constrained('vehicles')->onDelete('set null');
@@ -56,9 +56,6 @@ return new class extends Migration
             // Statistics
             $table->integer('total_trips_completed')->default(0);
             $table->decimal('average_rating', 3, 2)->nullable();
-
-            // Availability
-            //$table->json('regular_availability')->nullable()->comment('JSON of regular working hours');
 
             // Additional Information
             $table->text('notes')->nullable();

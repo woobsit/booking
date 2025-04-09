@@ -21,12 +21,8 @@ class Route extends Model
         'estimated_duration',
         'type',
         'base_price',
-        'price_per_km',
-        'peak_time_surcharge',
-        'weekend_surcharge',
         'first_departure_time',
         'last_departure_time',
-        'frequency_minutes',
         'is_active',
     ];
 
@@ -61,24 +57,6 @@ class Route extends Model
         return $query->where('type', $type);
     }
 
-    /**
-     * Calculate price for this route
-     */
-    public function calculatePrice($distance = null, $isPeak = false, $isWeekend = false)
-    {
-        $distance = $distance ?? $this->distance;
-        $price = $this->base_price + ($distance * $this->price_per_km);
-
-        if ($isPeak) {
-            $price += $this->peak_time_surcharge;
-        }
-
-        if ($isWeekend) {
-            $price += $this->weekend_surcharge;
-        }
-
-        return $price;
-    }
 
     /**
      * Get all waypoints as an array

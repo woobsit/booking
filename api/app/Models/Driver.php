@@ -59,7 +59,6 @@ class Driver extends Model
         'insurance_expiry' => 'date',
         'medical_certificate_expiry' => 'date',
         'regular_availability' => 'array',
-        'hourly_rate' => 'decimal:2',
         'monthly_salary' => 'decimal:2',
         'average_rating' => 'decimal:2',
         'total_trips_completed' => 'integer'

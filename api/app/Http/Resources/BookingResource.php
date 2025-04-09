@@ -13,9 +13,9 @@ class BookingResource extends JsonResource
             'booking_reference' => $this->booking_reference,
             'status' => $this->status,
             'customer' => [
-                'name' => $this->customer_name,
-                'email' => $this->customer_email,
-                'phone' => $this->customer_phone
+                'name' => $this->user->name,
+                'email' => $this->user->email,
+                'phone' => $this->user->phone
             ],
             'trip_details' => [
                 'pickup_location' => $this->pickup_location,
@@ -33,8 +33,6 @@ class BookingResource extends JsonResource
                 ];
             }),
             'pricing' => [
-                'base_fare' => $this->base_fare,
-                'distance_fare' => $this->distance_fare,
                 'total_amount' => $this->total_amount,
                 'currency' => $this->currency
             ],

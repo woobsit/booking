@@ -25,12 +25,9 @@ class Vehicle extends Model
         'insurance_provider',
         'insurance_expiry',
         'next_service_date',
-        'base_fare',
-        'per_km_rate',
-        'per_minute_rate',
         'has_ac',
         'has_wifi',
-        'is_wheelchair_accessible',
+
     ];
 
     protected $casts = [
@@ -38,7 +35,7 @@ class Vehicle extends Model
         'next_service_date' => 'date',
         'has_ac' => 'boolean',
         'has_wifi' => 'boolean',
-        'is_wheelchair_accessible' => 'boolean',
+
     ];
 
     /**
@@ -79,15 +76,5 @@ class Vehicle extends Model
     public function isAvailable()
     {
         return $this->status === 'available';
-    }
-
-    /**
-     * Calculate estimated fare for a given distance and duration
-     */
-    public function calculateFare($distance, $duration = 0)
-    {
-        return $this->base_fare
-            + ($distance * $this->per_km_rate)
-            + ($duration * $this->per_minute_rate);
     }
 }

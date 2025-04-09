@@ -19,8 +19,8 @@ class StoreBookingRequest extends FormRequest
             'dropoff_location' => 'required|string|max:255',
             'pickup_time' => 'required|date|after:now',
             'passenger_count' => 'required|integer|min:1|max:20',
-            'distance' => 'required|numeric|min:0.1',
-            'special_requests' => 'nullable|string|max:500'
+            'special_requests' => 'nullable|string|max:500',
+            'booking_date' => 'required|date',
         ];
     }
 
