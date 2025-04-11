@@ -54,14 +54,16 @@ class Vehicle extends Model
         return $this->hasMany(Booking::class);
     }
 
-    /**
-     * Scope a query to only include available vehicles
-     */
     public function scopeAvailable($query)
     {
-        return $query->where('status', 'available');
+        return $query->where('status', 'available')
+            ->where('seat_capacity', '>', 0); // Available seats
     }
 
+    public function scopeNotFull($query)
+    {
+        return $query->whereColumn('passenger_count', '<', 'seat_capacity');
+    }
     /**
      * Scope a query to only include vehicles of a specific type
      */

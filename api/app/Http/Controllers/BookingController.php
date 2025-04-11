@@ -44,46 +44,45 @@ class BookingController extends Controller
     {
         try {
             return DB::transaction(function () use ($request) {
-                // Get available vehicle and driver
-                $vehicle = Vehicle::available()
-                    ->where('type', $request->vehicle_type)
-                    ->firstOrFail();
-
-                $driver = Driver::available()
-                    ->whereHas('vehicle', fn($q) => $q->where('id', $vehicle->id))
-                    ->firstOrFail();
-
-                // Find the route based on pickup/dropoff locations
+                // 1. Find the route
                 $route = Route::where('origin', $request->pickup_location)
                     ->where('destination', $request->dropoff_location)
                     ->firstOrFail();
 
-                // Create booking
+                // 2. Get available vehicle with capacity
+                $vehicle = Vehicle::available()
+                    ->notFull()
+                    ->where('type', $request->vehicle_type)
+                    ->whereHas('routes', fn($q) => $q->where('id', $route->id))
+                    ->firstOrFail();
+
+                // 3. Check passenger count doesn't exceed capacity
+                $availableSeats = $vehicle->seat_capacity - $vehicle->passenger_count;
+                if ($request->passenger_count > $availableSeats) {
+                    throw new \Exception("Not enough seats available. Only {$availableSeats} remaining.");
+                }
+
+                // 4. Create booking
                 $booking = Booking::create([
                     'booking_reference' => Booking::generateBookingReference(),
-                    'user_id' => auth()->id(),
+                    'user_id' => 5, //auth()->id(),
                     'vehicle_id' => $vehicle->id,
-                    'driver_id' => $driver->id,
+                    'route_id' => $route->id,
                     'vehicle_type' => $request->vehicle_type,
                     'pickup_location' => $request->pickup_location,
                     'dropoff_location' => $request->dropoff_location,
                     'pickup_time' => $request->pickup_time,
-                    'route_id' => $route->id,
                     'passenger_count' => $request->passenger_count,
-                    'special_requests' => $request->special_requests,
-                    'status' => 'confirmed',
-                    'total_amount' => $request->total_amount,
-                    'booking_date' => $request->booking_date,
+                    'total_amount' => $route->base_price * $request->passenger_count,
                 ]);
 
-                // Update resources
-                $vehicle->update(['status' => 'unavailable']);
-                $driver->update(['status' => 'on_trip']);
+                // 5. Update vehicle passenger count (but don't mark unavailable)
+                $vehicle->increment('passenger_count', $request->passenger_count);
 
                 return response()->json([
                     'success' => true,
                     'message' => 'Booking created successfully',
-                    'data' => new BookingResource($booking->load(['user', 'vehicle', 'driver', 'route']))
+                    'data' => new BookingResource($booking)
                 ], 201);
             });
         } catch (\Exception $e) {
@@ -94,29 +93,52 @@ class BookingController extends Controller
             ], 500);
         }
     }
-
     /**
-     * Get single booking
+     * Get single booking with all relationships
      */
     public function show(Booking $booking)
     {
-       // $this->authorize('view', $booking);
+        // $this->authorize('view', $booking); // Uncomment when policies are ready
 
         return response()->json([
             'success' => true,
-            'data' => new BookingResource($booking->load(['vehicle', 'driver', 'route']))
+            'data' => new BookingResource(
+                $booking->load([
+                    'vehicle.driver', // Vehicle with its assigned driver
+                    'route.stops',    // Route with all stops
+                    'user',           // Booking user
+                    'driver'          // Trip driver (may differ from vehicle's driver)
+                ])
+            ),
+            'meta' => [
+                'cancelable' => $booking->isCancellable(),
+                'modifiable' => $booking->isModifiable()
+            ]
         ]);
     }
-
     /**
-     * Update booking
+     * Update booking (admin only)
      */
     public function update(UpdateBookingRequest $request, Booking $booking)
     {
         try {
             $this->authorize('update', $booking);
 
-            $booking->update($request->validated());
+            if (!$booking->isModifiable()) {
+                throw new \Exception('Only pending bookings can be modified');
+            }
+
+            $validated = $request->validated();
+
+            DB::transaction(function () use ($booking, $validated) {
+                // Handle passenger count changes
+                if (isset($validated['passenger_count'])) {
+                    $diff = $validated['passenger_count'] - $booking->passenger_count;
+                    $booking->vehicle()->increment('passenger_count', $diff);
+                }
+
+                $booking->update($validated);
+            });
 
             return response()->json([
                 'success' => true,
@@ -140,21 +162,34 @@ class BookingController extends Controller
         try {
             $this->authorize('cancel', $booking);
 
-            $booking->update(['status' => 'cancelled']);
-
-            // Free up resources
-            if ($booking->vehicle) {
-                $booking->vehicle->update(['status' => 'available']);
+            if (!$booking->isCancellable()) {
+                throw new \Exception('Booking cannot be cancelled in its current state');
             }
 
-            if ($booking->driver) {
-                $booking->driver->update(['status' => 'available']);
-            }
+            DB::transaction(function () use ($booking) {
+                // Update booking status
+                $booking->update([
+                    'booking_status' => Booking::STATUS_CANCELLED,
+                    'cancelled_at' => now()
+                ]);
+
+                // Refund logic if paid
+                if ($booking->payment_status === 'paid') {
+                    $booking->update(['payment_status' => 'refund_pending']);
+                    // $this->initiateRefund($booking); // Uncomment when refund system is ready
+                }
+
+                // Free up vehicle capacity
+                $booking->vehicle()->decrement(
+                    'passenger_count',
+                    $booking->passenger_count
+                );
+            });
 
             return response()->json([
                 'success' => true,
                 'message' => 'Booking cancelled successfully',
-                'data' => new BookingResource($booking)
+                'data' => new BookingResource($booking->fresh())
             ]);
         } catch (\Exception $e) {
             return response()->json([
@@ -164,14 +199,20 @@ class BookingController extends Controller
             ], 500);
         }
     }
-
     /**
-     * Get user bookings
+     * Get authenticated user's bookings
      */
     public function userBookings(Request $request)
     {
         $bookings = Booking::where('user_id', auth()->id())
-            ->with(['vehicle', 'driver'])
+            ->with(['vehicle', 'route', 'driver'])
+            ->filter($request->only([
+                'booking_status',
+                'trip_status',
+                'payment_status',
+                'from_date',
+                'to_date'
+            ]))
             ->latest()
             ->paginate($request->per_page ?? 10);
 
@@ -180,12 +221,23 @@ class BookingController extends Controller
             'data' => BookingResource::collection($bookings),
             'meta' => [
                 'current_page' => $bookings->currentPage(),
-                'total_pages' => $bookings->lastPage(),
-                'total_items' => $bookings->total(),
+                'per_page' => $bookings->perPage(),
+                'total' => $bookings->total(),
+                'status_counts' => $this->getUserStatusCounts(auth()->id())
             ]
         ]);
     }
 
+    // Add this helper method to the controller
+    protected function getUserStatusCounts($userId)
+    {
+        return Booking::where('user_id', $userId)
+            ->selectRaw('count(*) as total')
+            ->selectRaw("count(case when booking_status = 'pending' then 1 end) as pending")
+            ->selectRaw("count(case when booking_status = 'confirmed' then 1 end) as confirmed")
+            ->selectRaw("count(case when trip_status = 'on_trip' then 1 end) as active_trips")
+            ->first();
+    }
     /**
      * Check availability
      */

@@ -2,6 +2,7 @@
 
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\BookingController;
+use App\Http\Controllers\Admin\TripController;
 
 /*
 |--------------------------------------------------------------------------
@@ -19,6 +20,8 @@ Route::middleware(['api'])->prefix('v1')->group(function () {
     //Route::post('/admin-login', [AdminAuthController::class, 'adminLogin']);
     //User Login
     //Route::post('/user-login', [UserAuthController::class, 'userLogin']);
+
+    Route::get('/bookings/{booking}', [BookingController::class, 'show']);
 
     Route::get('/show-all-bookings', [BookingController::class, 'index']);
 
@@ -51,4 +54,12 @@ Route::middleware(['auth:admin', 'scope:admin'])->prefix('v1')->group(function (
 
     //show all bookings
     // Route::get('/show-bookings', [BookingController::class, 'index']);
+
+    // Route::get('/bookings/{booking}', [BookingController::class, 'show']);
+
+    // Start trip (requires driver_id in request body)
+    Route::put('/{booking}/start', [TripController::class, 'startTrip']);
+
+    // Complete trip
+    Route::put('/{booking}/complete', [TripController::class, 'completeTrip']);
 });

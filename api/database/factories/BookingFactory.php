@@ -29,7 +29,8 @@ class BookingFactory extends Factory
         return [
             'booking_reference' => 'BK' . $this->faker->unique()->randomNumber(6),
             'booking_date' => $this->faker->dateTimeThisYear(),
-            'status' => 'pending',
+            'booking_status' => 'pending',
+            'trip_status' => $this->faker->randomElement(['not_started', 'on_trip', 'completed']),
             'user_id' => 1,
             'vehicle_id' => 1,
             'route_id' => 1,

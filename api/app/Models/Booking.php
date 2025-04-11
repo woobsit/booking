@@ -10,6 +10,34 @@ class Booking extends Model
 {
     use HasFactory, SoftDeletes;
 
+    // Booking Statuses
+    const PENDING = 'pending';
+    const CONFIRMED = 'confirmed';
+    const CANCELLED = 'cancelled';
+
+    // Trip Statuses
+    const NOT_STARTED = 'not_started';
+    const ON_TRIP = 'on_trip';
+    const COMPLETED = 'completed';
+
+    const STATUS_PENDING = 'pending';
+    const STATUS_CONFIRMED = 'confirmed';
+    const STATUS_CANCELLED = 'cancelled';
+
+    // Trip Statuses
+    const TRIP_NOT_STARTED = 'not_started';
+    const TRIP_ON_TRIP = 'on_trip';
+    const TRIP_COMPLETED = 'completed';
+
+    // Payment Statuses
+    const PAYMENT_PENDING = 'pending';
+    const PAYMENT_PAID = 'paid';
+    const PAYMENT_FAILED = 'failed';
+    const PAYMENT_REFUNDED = 'refunded';
+    const PAYMENT_PARTIALLY_REFUNDED = 'partially_refunded';
+
+
+
     protected $fillable = [
         'booking_reference',
         'booking_date',
@@ -40,6 +68,8 @@ class Booking extends Model
         'booking_date' => 'datetime',
         'pickup_time' => 'datetime',
         'dropoff_time' => 'datetime',
+        'booking_status' => 'string',
+        'trip_status' => 'string',
     ];
 
 
@@ -85,7 +115,7 @@ class Booking extends Model
      */
     public function scopePending($query)
     {
-        return $query->where('status', 'pending');
+        return $query->where('booking_status', 'pending');
     }
 
     /**
@@ -93,7 +123,7 @@ class Booking extends Model
      */
     public function scopeConfirmed($query)
     {
-        return $query->where('status', 'confirmed');
+        return $query->where('booking_status', self::CONFIRMED);
     }
 
     /**
@@ -101,7 +131,7 @@ class Booking extends Model
      */
     public function scopeCompleted($query)
     {
-        return $query->where('status', 'completed');
+        return $query->where('booking_status', 'completed');
     }
 
     /**
@@ -109,7 +139,7 @@ class Booking extends Model
      */
     public function scopeCancelled($query)
     {
-        return $query->where('status', 'cancelled');
+        return $query->where('booking_status', 'cancelled');
     }
 
     /**
@@ -152,6 +182,23 @@ class Booking extends Model
         return $this->pickup_time->diffInMinutes($this->dropoff_time);
     }
 
+    public function scopeActiveTrips($query)
+    {
+        return $query->where('trip_status', self::ON_TRIP);
+    }
+
+
+    public function isConfirmable()
+    {
+        return $this->booking_status === self::CONFIRMED &&
+            $this->trip_status === self::NOT_STARTED;
+    }
+
+    public function isCancellable()
+    {
+        return $this->trip_status === self::NOT_STARTED;
+    }
+
     /**
      * Generate a unique booking reference.
      */
@@ -168,4 +215,17 @@ class Booking extends Model
 
         return $reference;
     }
+
+    // public function isModifiable(): bool
+    // {
+    //     return $this->booking_status === self::STATUS_PENDING &&
+    //         $this->trip_status === self::TRIP_NOT_STARTED;
+    // }
+
+    // public function isRefundable(): bool
+    // {
+    //     return $this->payment_status === 'paid' &&
+    //         $this->booking_status === self::STATUS_CANCELLED &&
+    //         $this->refunded_at === null;
+    // }
 }
