@@ -24,13 +24,12 @@ return new class extends Migration
 
             // Customer-specific fields
             $table->string('preferred_payment_method')->nullable();
-            $table->integer('loyalty_points')->default(0);
             $table->date('birth_date')->nullable();
 
             // Account status
             $table->boolean('is_active')->default(true);
             $table->boolean('is_verified')->default(false);
-
+            $table->boolean('remember_me')->default(true);
             $table->rememberToken();
             $table->timestamps();
             $table->softDeletes();

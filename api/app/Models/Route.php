@@ -41,6 +41,12 @@ class Route extends Model
         return $this->hasMany(Booking::class);
     }
 
+
+    public function stops()
+    {
+        return $this->hasMany(RouteStop::class); // or whatever your stop model is named
+    }
+
     /**
      * Scope a query to only include active routes
      */

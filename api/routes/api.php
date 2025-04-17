@@ -3,6 +3,8 @@
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\BookingController;
 use App\Http\Controllers\Admin\TripController;
+use App\Http\Controllers\Auth\AdminAuthController;
+use App\Http\Controllers\Auth\UserAuthController;
 
 /*
 |--------------------------------------------------------------------------
@@ -16,14 +18,12 @@ use App\Http\Controllers\Admin\TripController;
 */
 
 Route::middleware(['api'])->prefix('v1')->group(function () {
+    //Login
+    Route::post('/login', [UserAuthController::class, 'login']);
+
     //Admin Login
-    //Route::post('/admin-login', [AdminAuthController::class, 'adminLogin']);
-    //User Login
-    //Route::post('/user-login', [UserAuthController::class, 'userLogin']);
+    Route::post('/admin-login', [AdminAuthController::class, 'adminLogin']);
 
-    Route::get('/bookings/{booking}', [BookingController::class, 'show']);
-
-    Route::get('/show-all-bookings', [BookingController::class, 'index']);
 
     //Book vehicle
     Route::post('/book', [BookingController::class, 'store']);
@@ -56,6 +56,19 @@ Route::middleware(['auth:admin', 'scope:admin'])->prefix('v1')->group(function (
     // Route::get('/show-bookings', [BookingController::class, 'index']);
 
     // Route::get('/bookings/{booking}', [BookingController::class, 'show']);
+
+
+
+    Route::get('/show-trip/{trip}', [TripController::class, 'show']);
+
+
+    Route::get('/show-trips', [TripController::class, 'index']); // Admin
+
+    Route::post('/create-trip', [TripController::class, 'store']); // Admin
+
+    Route::get('/bookings/{booking}', [BookingController::class, 'show']);
+
+    Route::get('/show-all-bookings', [BookingController::class, 'index']);
 
     // Start trip (requires driver_id in request body)
     Route::put('/{booking}/start', [TripController::class, 'startTrip']);

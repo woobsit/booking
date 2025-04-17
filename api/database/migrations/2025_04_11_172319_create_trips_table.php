@@ -12,14 +12,20 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('trips', function (Blueprint $table) {
+            $table->id();
             $table->foreignId('route_id')->constrained();
             $table->foreignId('vehicle_id')->constrained();
+            $table->foreignId('driver_id')->constrained();
             $table->dateTime('departure_time');
-            $table->dateTime('arrival_time');
+            $table->dateTime('estimated_arrival_time');
+            $table->dateTime('actual_arrival_time')->nullable();
             $table->integer('available_seats');
             $table->decimal('price', 8, 2);
             $table->enum('status', ['scheduled', 'boarding', 'departed', 'completed', 'cancelled']);
+            $table->text('notes')->nullable();
+            $table->text('cancellation_reason')->nullable();
             $table->timestamps();
+            $table->softDeletes();
         });
     }
 

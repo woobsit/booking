@@ -26,7 +26,6 @@ class UserFactory extends Factory
             'phone' => $this->faker->phoneNumber(),
             'address' => $this->faker->address(),
             'preferred_payment_method' => $this->faker->randomElement(['credit_card', 'mpesa', 'paypal']),
-            'loyalty_points' => $this->faker->numberBetween(0, 500),
             'birth_date' => $this->faker->dateTimeBetween('-60 years', '-18 years'),
             'is_active' => true,
             'is_verified' => true,

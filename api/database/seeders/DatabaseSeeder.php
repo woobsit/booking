@@ -14,10 +14,11 @@ class DatabaseSeeder extends Seeder
     {
 
         $this->call([
-            RouteSeeder::class,  
+            RouteSeeder::class,
             DriverSeeder::class,
-            VehicleSeeder::class, 
+            VehicleSeeder::class,
             UserSeeder::class,
+            TripSeeder::class,
             BookingSeeder::class,
         ]);
         // \App\Models\User::factory(10)->create();

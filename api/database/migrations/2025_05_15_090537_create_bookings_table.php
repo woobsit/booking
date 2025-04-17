@@ -12,9 +12,33 @@ return new class extends Migration
     public function up()
     {
         Schema::create('bookings', function (Blueprint $table) {
-            $table->foreignId('trip_id')->constrained(); // Instead of individual fields
-            $table->integer('seat_count'); // How many seats booked
-            $table->dropColumn(['pickup_location', 'dropoff_location', 'pickup_time']); // Now comes from trip
+            $table->id();
+            $table->string('booking_reference')->unique();
+            $table->integer('seat_count');
+            $table->decimal('total_amount', 10, 2);
+            $table->enum('status', [
+                'pending',
+                'confirmed',
+                'cancelled'
+            ])->default('pending');
+            $table->enum('payment_status', [
+                'pending',
+                'paid',
+                'failed',
+                'refunded'
+            ])->default('pending');
+            $table->text('special_requests')->nullable();
+            $table->foreignId('trip_id')->constrained()->cascadeOnDelete();
+            $table->foreignId('user_id')->constrained()->cascadeOnDelete();
+            $table->timestamps();
+            $table->timestamp('cancelled_at')->nullable();
+            $table->timestamp('confirmed_at')->nullable();
+            $table->softDeletes();
+
+
+            $table->index('status');
+            $table->index('payment_status');
+            $table->index('created_at');
         });
     }
 

@@ -23,10 +23,9 @@ class UserSeeder extends Seeder
         User::create([
             'name' => 'Admin User',
             'email' => 'admin@booking.com',
-            'password' => Hash::make('admin123'),
+            'password' => Hash::make('123456'),
             'phone' => '1234567890',
-            'is_active' => true,
-            'is_verified' => true,
+
         ]);
     }
 }
